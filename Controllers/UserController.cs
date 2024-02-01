@@ -44,7 +44,7 @@ namespace UserManagerApp.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public IActionResult UpdatePokemon(int pokeId,
+        public IActionResult UpdateUser(int pokeId,
             [FromQuery] int userId,
             [FromBody] User updatedUser)
         {
