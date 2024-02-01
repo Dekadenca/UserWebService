@@ -1,6 +1,6 @@
-﻿namespace UserManagerApp.Models
+﻿namespace UserManagerApp.Dto
 {
-    public class User
+    public class UserDto
     {
         public int Id { get; set; }
         public required string UserName { get; set; }
@@ -9,7 +9,6 @@
         public string? MobileNumber { get; set; }
         public string? Language { get; set; }
         public required string Culture { get; set; }
-        public required string Password { get; set; }
 
     }
 }

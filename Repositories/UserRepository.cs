@@ -20,57 +20,55 @@ namespace UserManagerApp.Repositories
             return Save();
         }
 
-        public bool DeleteUser(int id)
+        public bool DeleteUser(User user)
         {
-            var user = GetUser(id);
-            if (user != null)
+            _context.Remove(user);
+            return Save();
+        }
+
+        public User? GetUser(int id)
+        {
+            return _context.Users.Where(u => u.Id == id).FirstOrDefault();
+        }
+
+        public User? GetUser(string value, string property)
+        {
+            User? user = null;
+
+            switch (property)
             {
-                _context.Remove(user);
-                return Save();
+                case CustomConstants.ID:                    
+                    user = _context.Users.Where(u => u.Id == Int32.Parse(property)).FirstOrDefault();
+                    break;
+                case CustomConstants.EMAIL:
+                    user = _context.Users.Where(u => u.Email == property).FirstOrDefault();
+                    break;
+                case CustomConstants.USERNAME:
+                    user = _context.Users.Where(u => u.UserName == property).FirstOrDefault();
+                    break;
+
             }
 
-            return false;
+            return user;
         }
-
-        public User? GetUser(int Id)
+        public bool UpdateUser(User user)
         {
-            return _context.Users.Where(u => u.Id == Id).FirstOrDefault();
-        }
+            user.Password = Crypt.HashData(user.Password);
 
-        public bool UpdateUser(User user, int Id)
-        {
             //Check how this works and how it knows which user it is
             _context.Update(user);
             return Save();
         }
 
-        public bool ValidateUser(string password, int Id)
+        public bool ValidateUser(string password, int id)
         {
-            var user = GetUser(Id);
+            var user = GetUser(id);
             if (user != null)
             {
                 return Crypt.ValidateData(password, user.Password);
             }
 
             return false;
-        }
-
-        public bool UserExists(string value, string property)
-        {
-            User? user = null;
-
-            switch (property)
-            {
-                case "email":
-                    user = _context.Users.Where(u => u.Email == property).FirstOrDefault();
-                    break;
-                case "username":
-                    user = _context.Users.Where(u => u.UserName == property).FirstOrDefault();
-                    break;
-
-            }
-
-            return user != null;
         }
 
         public bool Save()

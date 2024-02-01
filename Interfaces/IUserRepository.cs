@@ -5,10 +5,9 @@ namespace UserManagerApp.Interfaces
     public interface IUserRepository
     {
         bool AddUser(User user);
-        bool UpdateUser(User user, int Id);
-        bool DeleteUser(int Id);
-        User? GetUser(int Id);
-        bool ValidateUser(string password, int Id);
-        bool UserExists(string value, string property);
+        bool UpdateUser(User user);
+        bool DeleteUser(User user);
+        User? GetUser(string value, string property);
+        bool ValidateUser(string password, int id);
     }
 }

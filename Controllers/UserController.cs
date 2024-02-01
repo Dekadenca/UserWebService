@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.VisualBasic;
+using UserManagerApp.Dto;
+using UserManagerApp.Helpers;
 using UserManagerApp.Interfaces;
 using UserManagerApp.Models;
 
@@ -23,70 +26,67 @@ namespace UserManagerApp.Controllers
             {
                 return BadRequest(ModelState);
             }
-
-            var user = _userRepository.AddUser(newUser);
-            //TODO: Check if user was inserted when we have it implemented
-        
-
-
-        }
-
-        [HttpPut("{pokeId}")]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
-        public IActionResult UpdatePokemon(int pokeId,
-            [FromQuery] int ownerId, [FromQuery] int catId,
-            [FromBody] PokemonDto updatedPokemon)
-        {
-            if (updatedPokemon == null)
-                return BadRequest(ModelState);
-
-            if (pokeId != updatedPokemon.Id)
-                return BadRequest(ModelState);
-
-            if (!_pokemonRepository.PokemonExists(pokeId))
-                return NotFound();
-
+            
             if (!ModelState.IsValid)
-                return BadRequest();
-
-            var pokemonMap = _mapper.Map<Pokemon>(updatedPokemon);
-
-            if (!_pokemonRepository.UpdatePokemon(ownerId, catId, pokemonMap))
             {
-                ModelState.AddModelError("", "Something went wrong updating owner");
+                return BadRequest(ModelState);
+            }
+
+            if (!_userRepository.AddUser(newUser)){
+                ModelState.AddModelError("", "Something went wrong.");
                 return StatusCode(500, ModelState);
             }
 
             return NoContent();
         }
 
-        [HttpDelete("{pokeId}")]
+        [HttpPut("{userId}")]
         [ProducesResponseType(400)]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public IActionResult DeletePokemon(int pokeId)
+        public IActionResult UpdatePokemon(int pokeId,
+            [FromQuery] int userId,
+            [FromBody] User updatedUser)
         {
-            if (!_pokemonRepository.PokemonExists(pokeId))
+            if (updatedUser == null)
+                return BadRequest(ModelState);
+
+            if (pokeId != updatedUser.Id)
+                return BadRequest(ModelState);
+
+            if (_userRepository.GetUser(userId) == null)
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            if (!_userRepository.UpdateUser(updatedUser))
+            {
+                ModelState.AddModelError("", "Something went wrong updating user.");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{userId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteUser(int userId)
+        {
+            var user = _userRepository.GetUser(userId);
+            if (user == null)
             {
                 return NotFound();
             }
 
-            var reviewsToDelete = _reviewRepository.GetReviewsOfAPokemon(pokeId);
-            var pokemonToDelete = _pokemonRepository.GetPokemon(pokeId);
-
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_reviewRepository.DeleteReviews(reviewsToDelete.ToList()))
+            if (!_userRepository.DeleteUser(user))
             {
-                ModelState.AddModelError("", "Something went wrong when deleting reviews");
-            }
-
-            if (!_pokemonRepository.DeletePokemon(pokemonToDelete))
-            {
-                ModelState.AddModelError("", "Something went wrong deleting owner");
+                ModelState.AddModelError("", "Something went wrong deleting user.");
             }
 
             return NoContent();
@@ -111,23 +111,48 @@ namespace UserManagerApp.Controllers
             return Ok(user);
         }
 
-        [HttpGet("{id}")]
-        [ProducesResponseType(200, Type = typeof(User))]
+        [HttpPost("validate")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
         [ProducesResponseType(400)]
-        public IActionResult GetUser(int id)
+        public IActionResult ValidateUser(UserValidationDto userValidation)
         {
-            var user = _userRepository.GetUser(id);
-            if (user == null)
+            
+            if (userValidation == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (userValidation.Email == null && userValidation.UserName == null)
+            {
+                return BadRequest("Missing email or username.");
+            }
+
+            User user;
+            if (userValidation.Email != null)
+            {
+                user = GetUser();
+            }
+
+            if (userValidation.Email == null && userValidation.UserName != null)
+            {
+                userExists = _userRepository.UserExists(CustomConstants.USERNAME, userValidation.UserName);
+            }
+
+            if (!userExists)
             {
                 return NotFound();
             }
+
+            var userValidated = _userRepository.ValidateUser(userValidation.Password, )
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            return Ok(user);
+            return Ok();
         }
     }
 }
