@@ -1,5 +1,6 @@
 ﻿namespace UserManagerApp.Helpers
 {
+    // General custom constants class
     public sealed class CustomConstants
     {
         public const string ID = "id";

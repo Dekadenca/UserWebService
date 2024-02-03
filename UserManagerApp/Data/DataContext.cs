@@ -7,6 +7,8 @@ namespace UserManagerApp.Data
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options) {}
 
+        // Set database tables into DbContext for later use
         public DbSet<User> Users { get; set; }
+        public DbSet<ApiKey> ApiKeys { get; set; }
     }
 }

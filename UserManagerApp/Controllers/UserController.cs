@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
 using UserManagerApp.Dto;
 using UserManagerApp.Helpers;
 using UserManagerApp.Interfaces;
@@ -12,7 +11,7 @@ namespace UserManagerApp.Controllers
     public class UserController : Controller
     {
         private readonly IUserRepository _userRepository;
-        public UserController(IUserRepository userRepository) 
+        public UserController(IUserRepository userRepository)
         { 
             _userRepository = userRepository;
         }
@@ -20,18 +19,33 @@ namespace UserManagerApp.Controllers
         [HttpPost]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public IActionResult InsertUser([FromBody] User newUser)
+        public IActionResult InsertUser([FromBody] UserPostDto newUserDto)
         {
-            if (newUser == null)
+            // Check if body object exists
+            if (newUserDto == null)
             {
                 return BadRequest(ModelState);
             }
-            
+
+            // Check if ModelState is valid
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            // Map body object to Model object
+            // Remove Id since it is not needed when inserting
+            var newUser = new User {
+                UserName = newUserDto.UserName,
+                FullName = newUserDto.FullName,
+                Email = newUserDto.Email,
+                MobileNumber = newUserDto.MobileNumber,
+                Language = newUserDto.Language,
+                Culture = newUserDto.Culture,
+                Password = newUserDto.Password,
+            };
+
+            // Add user to database
             if (!_userRepository.AddUser(newUser)){
                 ModelState.AddModelError("", "Something went wrong.");
                 return StatusCode(500, ModelState);
@@ -41,25 +55,42 @@ namespace UserManagerApp.Controllers
         }
 
         [HttpPut("{userId}")]
-        [ProducesResponseType(400)]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult UpdateUser(int pokeId,
-            [FromQuery] int userId,
-            [FromBody] User updatedUser)
+        public IActionResult UpdateUser(int userId, [FromBody] UserPostDto updatedUserDto)
         {
-            if (updatedUser == null)
+            // Check if body object exists
+            if (updatedUserDto == null)
+            {
                 return BadRequest(ModelState);
+            }
 
-            if (pokeId != updatedUser.Id)
-                return BadRequest(ModelState);
-
-            if (_userRepository.GetUser(userId) == null)
+            // Check if user being updated exists
+            if (_userRepository.GetUser(CustomConstants.ID, userId.ToString()) == null)
+            {
                 return NotFound();
+            }
 
+            // Check if ModelState is valid
             if (!ModelState.IsValid)
+            {
                 return BadRequest();
+            }
 
+            // Map body object to Model object
+            var updatedUser = new User
+            {
+                UserName = updatedUserDto.UserName,
+                FullName = updatedUserDto.FullName,
+                Email = updatedUserDto.Email,
+                MobileNumber = updatedUserDto.MobileNumber,
+                Language = updatedUserDto.Language,
+                Culture = updatedUserDto.Culture,
+                Password = updatedUserDto.Password,
+            };
+
+            // Update user in database
             if (!_userRepository.UpdateUser(updatedUser))
             {
                 ModelState.AddModelError("", "Something went wrong updating user.");
@@ -70,20 +101,19 @@ namespace UserManagerApp.Controllers
         }
 
         [HttpDelete("{userId}")]
-        [ProducesResponseType(400)]
         [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public IActionResult DeleteUser(int userId)
         {
-            var user = _userRepository.GetUser(userId);
+            // Check if user exists
+            var user = _userRepository.GetUser(CustomConstants.ID, userId.ToString());
             if (user == null)
             {
                 return NotFound();
             }
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
+            // Delete user from database
             if (!_userRepository.DeleteUser(user))
             {
                 ModelState.AddModelError("", "Something went wrong deleting user.");
@@ -92,17 +122,19 @@ namespace UserManagerApp.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{userId}")]
         [ProducesResponseType(200, Type = typeof(User))]
         [ProducesResponseType(400)]
-        public IActionResult GetUser(int id)
+        public IActionResult GetUser(int userId)
         {
-            var user = _userRepository.GetUser(id);
+            // Fetch user from database
+            var user = _userRepository.GetUser(CustomConstants.ID, userId.ToString());
             if(user == null)
             {
                 return NotFound();
             }
-            
+
+            // Check if ModelState is valid
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -113,43 +145,36 @@ namespace UserManagerApp.Controllers
 
         [HttpPost("validate")]
         [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(400)]
         public IActionResult ValidateUser(UserValidationDto userValidation)
         {
-            
+            // Check if userValidation object exists
             if (userValidation == null)
             {
                 return BadRequest(ModelState);
             }
 
-            if (userValidation.Email == null && userValidation.UserName == null)
+            User? user = _userRepository.GetUser(CustomConstants.USERNAME, userValidation.UserName);
+
+            // Check if ModelState is valid
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Missing email or username.");
+                return BadRequest(ModelState);
             }
 
-            User user;
-            if (userValidation.Email != null)
-            {
-                user = GetUser();
-            }
-
-            if (userValidation.Email == null && userValidation.UserName != null)
-            {
-                userExists = _userRepository.UserExists(CustomConstants.USERNAME, userValidation.UserName);
-            }
-
-            if (!userExists)
+            // Check user connected to username exists
+            if (user == null)
             {
                 return NotFound();
             }
 
-            var userValidated = _userRepository.ValidateUser(userValidation.Password, )
-
-            if (!ModelState.IsValid)
+            // Validate password with connected user
+            var userValidated = _userRepository.ValidateUser(userValidation.Password, user.Id);
+            if (!userValidated) 
             {
-                return BadRequest(ModelState);
+                return Unauthorized();
             }
 
             return Ok();
