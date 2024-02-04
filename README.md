@@ -8,3 +8,5 @@ All endpoints are secured with an api key which is saved in the database and is 
 For getting the code to work, you will need MS Visual Studio with .NET support. You will also need an SQL database connected to the project.
 
 In appsetting.json you can find connection strings for database which you have to change for it to work in your environment.
+
+UserInsert.sql should be run to set all the tables needed for the SQL database to work.
