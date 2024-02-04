@@ -17,7 +17,7 @@ namespace UserManagerApp.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(204)]
+        [ProducesResponseType(200)]
         [ProducesResponseType(400)]
         public IActionResult InsertUser([FromBody] UserPostDto newUserDto)
         {
@@ -46,12 +46,12 @@ namespace UserManagerApp.Controllers
             };
 
             // Add user to database
-            if (!_userRepository.AddUser(newUser)){
+            if (!_userRepository.AddUser(ref newUser)){
                 ModelState.AddModelError("", "Something went wrong.");
                 return StatusCode(500, ModelState);
             }
 
-            return NoContent();
+            return Ok(newUser.Id);
         }
 
         [HttpPut("{userId}")]
@@ -174,10 +174,10 @@ namespace UserManagerApp.Controllers
             var userValidated = _userRepository.ValidateUser(userValidation.Password, user.Id);
             if (!userValidated) 
             {
-                return Unauthorized();
+                return Unauthorized(false);
             }
 
-            return Ok();
+            return Ok(true);
         }
     }
 }

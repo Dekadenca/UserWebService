@@ -1,12 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using Serilog.Context;
-using Serilog.Events;
-using System.Net;
 using UserManagerApp.Authentication;
 using UserManagerApp.Data;
-using UserManagerApp.Helpers;
 using UserManagerApp.Interfaces;
 using UserManagerApp.Logger;
 using UserManagerApp.Repositories;

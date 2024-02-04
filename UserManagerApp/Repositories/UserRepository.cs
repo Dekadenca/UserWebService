@@ -13,11 +13,11 @@ namespace UserManagerApp.Repositories
         }
 
         // AddUser adds user object with User {user} to database 
-        public bool AddUser(User user)
+        public bool AddUser(ref User user)
         {
             user.Password = Crypt.HashData(user.Password);
             _context.Users.Add(user);
-            return Save();
+            return Save(); ;
         }
 
         // DeleteUser deletes user object with User {user} to database 
